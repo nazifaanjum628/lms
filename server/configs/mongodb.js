@@ -4,6 +4,6 @@ import mongoose from "mongoose";
 const connectDB=async()=>{
     mongoose.connection.on('connected',()=> console.log('Database Connected')) //register the event
 
-    await mongoose.connect(`${process.env.MONGODB_URI}/lms`)  // connect to database
+    await mongoose.connect(process.env.MONGODB_URI)  // connect to database
 }
 export default connectDB
