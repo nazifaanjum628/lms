@@ -3,7 +3,7 @@ import Course from '../models/Course.js'
 import {v2 as cloudinary} from 'cloudinary'
 import { Purchase } from '../models/Purchase.js'
 import User from '../models/User.js'
-
+import crypto from 'crypto' // Ensure you import this at the top
 
 //update role to educator
 export const updateRoleToEducator=async(req, res)=>{
@@ -21,26 +21,44 @@ export const updateRoleToEducator=async(req, res)=>{
     }
 }
 
-// add new course
-export const addCourse=async(req, res)=>{
-    try {
-        const {courseData}=req.body
-        const imageFile=req.file
-        const educatorId=req.auth.userId
 
-        if(!imageFile){
-            return res.json({success:false, message:'Thumbnail Not Attached'})
+// add new course
+export const addCourse = async (req, res) => {
+    try {
+        const { courseData } = req.body
+        const imageFile = req.file
+        const educatorId = req.auth.userId
+
+        if (!imageFile) {
+            return res.json({ success: false, message: 'Thumbnail Not Attached' })
         }
-        const parsedCourseData=await JSON.parse(courseData)
-        parsedCourseData.educator=educatorId
-        const newCourse=await Course.create(parsedCourseData)
-        const imageUpload=await cloudinary.uploader.upload(imageFile.path)
-        newCourse.courseThumbnail=imageUpload.secure_url
+
+        const parsedCourseData = await JSON.parse(courseData)
+        
+        // --- ADD THIS BLOCK TO GENERATE REQUIRED IDS ---
+        parsedCourseData.courseContent.forEach(chapter => {
+            // Generate ID if not provided by frontend
+            chapter.chapterId = crypto.randomUUID(); 
+            
+            chapter.chapterContent.forEach(lecture => {
+                // Generate ID if not provided by frontend
+                lecture.lectureId = crypto.randomUUID();
+            });
+        });
+        // -----------------------------------------------
+
+        parsedCourseData.educator = educatorId
+        
+        // Now create will work because lectureId and chapterId are present
+        const newCourse = await Course.create(parsedCourseData)
+        
+        const imageUpload = await cloudinary.uploader.upload(imageFile.path)
+        newCourse.courseThumbnail = imageUpload.secure_url
         await newCourse.save()
 
-        res.json({success:true, message:'Course Added'})
+        res.json({ success: true, message: 'Course Added' })
     } catch (error) {
-         res.json({success:false, message:error.message})
+        res.json({ success: false, message: error.message })
     }
 }
 
@@ -111,3 +129,34 @@ export const getEnrolledStudentsData=async(req, res)=>{
         res.json({success:false, message:error.message});
     }
 }
+
+
+{/*
+
+// add new course
+export const addCourse=async(req, res)=>{
+    try {
+        const {courseData}=req.body
+        const imageFile=req.file
+        const educatorId=req.auth.userId
+
+        if(!imageFile){
+            return res.json({success:false, message:'Thumbnail Not Attached'})
+        }
+        const parsedCourseData=await JSON.parse(courseData)
+        parsedCourseData.educator=educatorId
+        const newCourse=await Course.create(parsedCourseData)
+        const imageUpload=await cloudinary.uploader.upload(imageFile.path)
+        newCourse.courseThumbnail=imageUpload.secure_url
+        await newCourse.save()
+
+        res.json({success:true, message:'Course Added'})
+    } catch (error) {
+         res.json({success:false, message:error.message})
+    }
+}
+
+
+
+
+*/}

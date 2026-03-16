@@ -19,7 +19,9 @@ export const getCourseId=async(req, res)=>{
         const courseData=await Course.findById(id).populate({path:'educator'})
         //remove lecture url if isPreviewFree is false
         courseData.courseContent.forEach(chapter=>{
+            //chapter.chapterId = crypto.randomUUID();
             chapter.chapterContent.forEach(lecture=>{
+                //lecture.lectureId = crypto.randomUUID()
                 if(!lecture.isPreviewFree){
                     lecture.lectureUrl="";
 
