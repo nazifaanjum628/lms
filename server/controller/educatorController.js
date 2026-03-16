@@ -52,11 +52,34 @@ export const addCourse = async (req, res) => {
         // Now create will work because lectureId and chapterId are present
         const newCourse = await Course.create(parsedCourseData)
         
-        const imageUpload = await cloudinary.uploader.upload(imageFile.path)
+        {/*const imageUpload = await cloudinary.uploader.upload(imageFile.path)
         newCourse.courseThumbnail = imageUpload.secure_url
         await newCourse.save()
 
-        res.json({ success: true, message: 'Course Added' })
+        res.json({ success: true, message: 'Course Added' })*/}
+
+        try {
+            // 2. Upload to Cloudinary (Ensure this is awaited)
+            const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
+                resource_type: "image",
+                folder: "course_thumbnails"
+            });
+
+            // 3. Update the document with the URL
+            newCourse.courseThumbnail = imageUpload.secure_url;
+            await newCourse.save();
+
+            // 4. Send SUCCESS response only after everything is finished
+            return res.json({ success: true, message: 'Course Added Successfully' });
+
+        } catch (cloudinaryError) {
+            console.error("Cloudinary Error:", cloudinaryError.message);
+            // If image fails, course is still in DB, so we notify the user
+            return res.status(500).json({ 
+                success: false, 
+                message: "Course data saved, but thumbnail upload failed." 
+            });
+        }
     } catch (error) {
         res.json({ success: false, message: error.message })
     }
