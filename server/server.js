@@ -11,9 +11,16 @@ import { clerkMiddleware } from '@clerk/express';
 import connectCloudinary from './configs/cloudinary.js';
 import courseRouter from './routes/courseRoute.js';
 import userRouter from './routes/userRoutes.js';
+import liveRouter from './routes/liveClassRoute.js';
+import resourceRouter from './routes/resourceRoute.js';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 //initialize express
 const app=express()
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 //connect to database
 await connectDB()
@@ -30,6 +37,14 @@ app.use('/api/educator', express.json(), educatorRouter)
 app.use('/api/course', express.json(), courseRouter)
 app.use('/api/user', express.json(), userRouter) 
 app.post('/stripe', express.raw({type:'application/json'}), stripeWebhooks)
+app.use('/api/user', userRouter)
+
+app.use('/api/live', express.json(), liveRouter);
+
+app.use('/uploads', express.static(join(__dirname, 'uploads')));
+
+// Register resource route
+app.use('/api/resource', resourceRouter);
 
 //port
 const PORT=process.env.PORT || 5000

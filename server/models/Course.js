@@ -7,6 +7,11 @@ const lectureSchema=new mongoose.Schema({
    lectureUrl:{type:String, required:true},
    isPreviewFree:{type:Boolean, required:true},
    lectureOrder:{type:Number, required:true}, 
+   
+   resources: [{
+  url: { type: String },
+  name: { type: String },
+}]
 },{_id:false});
 
 const chapterSchema=new mongoose.Schema({
@@ -17,9 +22,21 @@ const chapterSchema=new mongoose.Schema({
 
 },{_id:false});
 
+const liveClassSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  scheduledAt: { type: Date, required: true },
+  duration: { type: Number, default: 60 },
+  roomName: { type: String, required: true }, // ← random unguessable string
+  isActive: { type: Boolean, default: true },
+  liveUrl: { type: String, default: '' } 
+});
+
+
 const courseSchema=new mongoose.Schema({
     courseTitle:{type:String, required:true},
     courseDescription:{type:String, required:true},
+    category: String,
+    tags: [String],
     courseThumbnail:{type:String},
     coursePrice:{type:Number, required:true},
     isPublished:{type:Boolean, default:true},
@@ -31,6 +48,7 @@ const courseSchema=new mongoose.Schema({
     educator:{type:String, ref:'User', required:true},
     enrolledStudents:[{type:String, ref:'User'}
     ],
+    liveClasses: [liveClassSchema]
 },{timestamps:true, minimize:false})
 
 const Course=mongoose.model('Course', courseSchema)

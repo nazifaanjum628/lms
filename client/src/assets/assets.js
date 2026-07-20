@@ -44,6 +44,7 @@ import profile_img3 from './profile_img3.png'
 import lesson_icon from './lesson_icon.svg'
 import Learnify from './Learnify.png'
 import Learnifyyy from './Learnifyyy.png'
+import thumbnail from './thumbnail.png'
 
 export const assets = {
     logo,
@@ -91,7 +92,8 @@ export const assets = {
     blue_tick_icon,
     lesson_icon,
     Learnify,
-    Learnifyyy
+    Learnifyyy,
+    thumbnail
 }
 
 export const dummyEducatorData = {

@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.60.0",
+    "@daily-co/daily-js": "^0.90.0",
+    "@daily-co/daily-react": "^0.25.2",
+    "@jitsi/react-sdk": "^1.4.4",
     "@tailwindcss/vite": "^4.1.18",
     "axios": "^1.13.6",
     "humanize-duration": "^3.33.2",
@@ -18,6 +21,7 @@
     "rc-progress": "^4.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-player": "^3.4.0",
     "react-router-dom": "^7.13.0",
     "react-toastify": "^11.0.5",
     "react-youtube": "^10.1.0",

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { AppContext } from '../../context/AppContext'
 import Loading from '../../components/student/Loading'
@@ -8,6 +8,9 @@ import Footer from '../../components/student/Footer'
 import YouTube from 'react-youtube'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import { useNavigate } from "react-router-dom";
+//import LiveClassSection from '../../components/student/LiveClassSection'
+
 
 const CourseDetails = () => {
   const {id}=useParams()
@@ -15,6 +18,11 @@ const CourseDetails = () => {
   const [openSections, setOpenSections]=useState({})
   const [isAlreadyEnrolled, setIsAlreadyEnrolled]=useState(false)
   const [playerData, setPlayerData]=useState(null)
+
+  const playerWrapperRef = useRef(null);
+
+  //to track if the user is in full screen or small 
+  const [isFs, setIsFs] = useState(false);
   
   const {allCourses, calculateRating, calculateNoOfLectures, calculateCourseDuration, calculateChapterTime, currency, backendUrl, userData, getToken}=useContext(AppContext)
   const fetchCourseData=async()=>{
@@ -43,8 +51,8 @@ const CourseDetails = () => {
       }
 
       const token=await getToken()
-
-      const {data}=await axios.post(backendUrl+'/api/user/purchase', {courseId:courseData._id}, {headers:{Authorization:`Bearer ${token}`}})
+      const {data}=await axios.post(backendUrl+'/api/user/purchase', 
+        {courseId:courseData._id}, {headers:{Authorization:`Bearer ${token}`}})
       if(data.success){
         const {session_url}=data
         window.location.replace(session_url)
@@ -68,6 +76,15 @@ const CourseDetails = () => {
 
   },[userData, courseData])
 
+  useEffect(() => {
+  const navigationType = window.performance.getEntriesByType("navigation")[0]?.type;
+
+  if (navigationType === "back_forward") {
+    // reload or ensure correct state
+    navigate(`/course/${courseId}`, { replace: true });
+  }
+}, []);
+
   const toggleSection=(index)=>{
     setOpenSections((prev)=>(
       {...prev, [index]: !prev[index],
@@ -76,10 +93,52 @@ const CourseDetails = () => {
     ));
   }
 
+  const handleFullScreen = () => {
+  const element = playerWrapperRef.current;
+  if (element) {
+    if (element.requestFullscreen) {
+      element.requestFullscreen();
+    } else if (element.webkitRequestFullscreen) { 
+      element.webkitRequestFullscreen();
+    }
+  }
+};
+
+useEffect(() => {
+  const handleFsChange = () => {
+    // Check if the current element is still the fullscreen element
+    setIsFs(!!document.fullscreenElement);
+  };
+  document.addEventListener('fullscreenchange', handleFsChange);
+  return () => document.removeEventListener('fullscreenchange', handleFsChange);
+}, []);
+
+const opts = {
+    width: '100%',
+    height: '100%',
+    playerVars: {
+      modestbranding: 1, 
+      rel: 0,            
+      fs: 0, 
+    },
+  };
+
+  const getYouTubeID = (url) => {
+  if (!url) return null;
+
+  const match = url.match(
+    /(?:youtu\.be\/|youtube\.com.*v=)([^&?/]+)/
+  );
+
+  return match ? match[1] : null;
+};
+
+
+
   return courseData?(
     <>
     <div className='flex md:flex-row flex-col-reverse gap-10 relative items-start justify-between md:px-36 px-8 md:pt-30 pt-20 text-left'>
-      <div className='absolute top-0 left-0 w-full h-section-height -z-1 bg-gradient-to-b from-cyan-100/70'></div>
+      <div className='absolute top-0 left-0 w-full h-section-height -z-1 bg-gradient-to-b from-blue-200/70'></div>
         {/*left column*/}
         <div className='max-w-xl z-10 text-gray-500'>
           <h1 className='md:text-course-details-heading-large text-course-details-heading-small font-semibold text-gray-800'>{courseData.courseTitle}</h1>
@@ -115,10 +174,7 @@ const CourseDetails = () => {
                           <div className='flex items-center justify-between w-full text-gray-800 text-xs md:text-default'>
                             <p>{lecture.lectureTitle}</p>
                             <div className='flex gap-2'>
-                              {lecture.isPreviewFree && <p onClick={()=>setPlayerData({videoId:lecture.lectureUrl.split('/').pop()
-
-                              })} 
-                              className='text-blue-500 cursor-pointer'>Preview</p> }
+                              {lecture.isPreviewFree && <p onClick={()=>setPlayerData({lectureUrl: lecture.lectureUrl })} className='text-blue-500 cursor-pointer'>Preview</p> }
                               <p>{humanizeDuration(lecture.lectureDuration*60*1000, {units: ['h','m']})}</p>
                             </div>
                           </div>
@@ -141,18 +197,105 @@ const CourseDetails = () => {
 
         </div>
          {/*right column*/}
-        <div className='max-w-course-card z-10 shadow-custom-card rounded-t md:rounded-none overflow-hidden bg-white min-w-[300px] sm:min-w-[420px]'>
+
+<div className='max-w-course-card z-10 shadow-custom-card rounded-t md:rounded-none overflow-hidden bg-white min-w-[300px] sm:min-w-[420px]'>
+  {playerData ? (
+    <div>
+    <div ref={playerWrapperRef} className='relative w-full aspect-video overflow-hidden rounded-md bg-black'>
+      
+      <YouTube
+  videoId={getYouTubeID(playerData.lectureUrl)}
+  opts={opts}
+  className='w-full h-full'
+    iframeClassName='w-full h-full block border-0' 
+/>
+
+      {/*<YouTube 
+        videoId={playerData.videoId} 
+        opts={opts}
+        className='w-full h-full'
+        iframeClassName='w-full h-full block border-0' 
+      />*/}
+
+      {/* SHIELD */}
+      <div className='absolute inset-0 z-10' style={{ pointerEvents: 'none' }}>
+      {isFs ? (
+    // LAYOUT FOR WATCH LARGE (FULLSCREEN)
+    <>
+      <div className='absolute top-0 left-0 w-full h-[15%]' style={{ pointerEvents: 'auto' }}></div>
+      <div className='absolute bottom-0 left-0 w-[13%] h-[8%]' style={{ pointerEvents: 'auto' }}></div>
+      <div className='absolute bottom-0 right-0 w-[23%] h-[8%]' style={{ pointerEvents: 'auto' }}></div>
+      <div className='absolute top-0 right-0 w-[1%] h-full' style={{ pointerEvents: 'auto' }}></div>
+    </>
+  ) : (
+    // LAYOUT FOR SMALL SCREEN
+    <>
+      <div className='absolute top-0 left-0 w-full h-[23%]' style={{ pointerEvents: 'auto' }}></div>
+      <div className='absolute bottom-0 left-0 w-full h-[29%]' style={{ pointerEvents: 'auto' }}></div>
+      <div className='absolute top-0 right-0 w-[1%] h-full' style={{ pointerEvents: 'auto' }}></div>
+      <div className='absolute bottom-0 left-0 w-[15%] h-[18%]' style={{ pointerEvents: 'auto' }}></div>
+    </>
+  )}              
+      </div>
+
+    </div>
+<div className='p-3 flex justify-end'>
+        <button
+          onClick={handleFullScreen}
+          className='text-sm text-blue-600 font-medium cursor-pointer hover:text-blue-800 flex items-center gap-1'>
+           Watch Large
+        </button>
+      </div>
+    </div>
+
+    
+
+    
+    
+  ) : (
+    <div className="relative w-full aspect-video overflow-hidden">
+      <img 
+        src={assets.thumbnail} 
+        alt="Course Thumbnail"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <h3 className="text-white text-xl md:text-2xl font-bold uppercase tracking-[0.2em] text-center px-6 drop-shadow-[0_0_12px_rgba(255,255,255,0.5)]">
+          {courseData.courseTitle}
+        </h3>
+      </div>
+    </div>
+  )}
+
+
+        {/*<div className='max-w-course-card z-10 shadow-custom-card rounded-t md:rounded-none overflow-hidden bg-white min-w-[300px] sm:min-w-[420px]'>
           {playerData?
            <YouTube videoId={playerData.videoId} opts={{playerVars:{autoplay:1
 
            }}} iframeClassName='w-full aspect-video'/>
-           :   <img src={courseData.courseThumbnail} alt="" />
-        }
+           :   (
+  <div className="relative w-full aspect-video overflow-hidden">
+    {/*Your Custom Gradient Image */}
+    {/*<img 
+      src={assets.thumbnail} 
+      alt="Course Thumbnail"
+      className="absolute inset-0 w-full h-full object-cover"
+    />
+    
+    {/* Centered Dynamic Title Overlay */}
+    {/*<div className="absolute inset-0 flex items-center justify-center">
+      <h3 className="text-white text-xl md:text-2xl font-bold uppercase tracking-[0.2em] text-center px-6 drop-shadow-[0_0_12px_rgba(255,255,255,0.5)]">
+        {courseData.courseTitle}
+      </h3>
+    </div>
+  </div>
+)
+        }*/}
           <div className='p-5'>
-            <div className='flex items-center gap-2'>
+            {/*<div className='flex items-center gap-2'>
               <img className='w-3.5' src={assets.time_left_clock_icon} alt="time left clock icon" />
               <p className='text-red-500'><span className='font-medium'>5 days</span> left at this price!</p>
-            </div>
+            </div>*/}
             <div className='flex gap-3 items-center pt-2'>
               <p className='text-gray-800 md:text-4xl text-2xl font-semibold'>{currency} {(courseData.coursePrice-courseData.discount*courseData.coursePrice/100).toFixed(2)}</p>
               <p className='md:text-lg text-gray-500 line-through'>{currency} {courseData.coursePrice}</p>
@@ -191,6 +334,8 @@ const CourseDetails = () => {
             </div>
           </div>
         </div>
+
+        {/*<LiveClassSection courseId={id} isEnrolled={isAlreadyEnrolled} />*/}
         <Footer/>
 
     </>

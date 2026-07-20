@@ -14,8 +14,23 @@ import StudentsEnrolled from './pages/educator/StudentsEnrolled'
 import Navbar from './components/student/Navbar'
 import "quill/dist/quill.snow.css"
 import { ToastContainer} from 'react-toastify';
+import DashboardPage from './pages/student/DashboardPage'
+import { useNavigate } from "react-router-dom";
+import { useEffect} from 'react'
+import EducatorCourseView from './pages/educator/EducatorCourseView'
+import EditCourse from './pages/educator/EditCourse'
+
 const App = () => {
   const isEducatorRoute=useMatch('/educator/*')
+  {/*const navigate = useNavigate();
+  useEffect(() => {
+  const lastCourse = localStorage.getItem("lastCourse");
+
+  if (lastCourse && window.location.pathname === "/") {
+    navigate(`/course/${lastCourse}`);
+    localStorage.removeItem("lastCourse");
+  }
+}, []);*/}
   return (
     <div className='text-default min-h-screen bg-white'>
       <ToastContainer/>
@@ -29,6 +44,7 @@ const App = () => {
         <Route path='/my-enrollments' element={<MyEnrollments />}/>
         <Route path='/player/:courseId' element={<Player />}/>
         <Route path='/loading/:path' element={<Loading />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
 
         
         <Route path='/educator' element={<Educator/>}>
@@ -36,6 +52,10 @@ const App = () => {
             <Route path='add-course' element={<AddCourse/>}/> 
             <Route path='my-courses' element={<MyCourses/>}/> 
             <Route path='student-enrolled' element={<StudentsEnrolled/>} />
+            <Route path='course/:id' element={<EducatorCourseView />} />
+            <Route path='edit-course/:id' element={<EditCourse />} />
+
+
 
         </Route>
       
